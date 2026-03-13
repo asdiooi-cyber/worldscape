@@ -1,0 +1,1298 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WorldScape: An Efficient Real-Time Interactive World Model with Universal Control</title>
+    <link rel="stylesheet" href="https://cdn.staticfile.org/tailwindcss/2.2.19/tailwind.min.css">
+    <link rel="stylesheet" href="https://cdn.staticfile.org/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;500;600;700&family=Noto+Sans+SC:wght@300;400;500;700&display=swap">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+    <style>
+        :root {
+            --primary-color: #2b6cb0;
+            --primary-color-rgb: 43, 108, 176;
+            --secondary-color: #2c5282;
+            --accent-color: #3182ce;
+            --text-color: #2d3748;
+            --bg-color: #f7fafc;
+            --bg-color-rgb: 247, 250, 252;
+            --card-bg: #ffffff;
+            --border-color: #e2e8f0;
+            --highlight-bg: #ebf8ff;
+            --highlight-border: #bee3f8;
+            --shadow: 0 4px 15px rgba(0,0,0,0.05);
+            --transition: all 0.3s ease;
+            --gradient-start: #2b6cb0;
+            --gradient-end: #38b2ac;
+            --primary-dark: #1a365d;
+            --secondary-dark: #234e52;
+        }
+
+        .dark {
+            --primary-color: #63b3ed;
+            --primary-color-rgb: 99, 179, 237;
+            --secondary-color: #90cdf4;
+            --accent-color: #4299e1;
+            --text-color: #e2e8f0;
+            --bg-color: #1a202c;
+            --bg-color-rgb: 26, 32, 44;
+            --card-bg: #2d3748;
+            --border-color: #4a5568;
+            --highlight-bg: #2a4365;
+            --highlight-border: #2b6cb0;
+            --shadow: 0 4px 15px rgba(0,0,0,0.3);
+            --gradient-start: #63b3ed;
+            --gradient-end: #4fd1c5;
+            --primary-dark: #1a365d;
+            --secondary-dark: #234e52;
+        }
+
+        .reading-progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: linear-gradient(to right, var(--primary-color), var(--accent-color));
+            width: 0%;
+            z-index: 9999;
+            transition: width 0.1s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        body {
+            font-family: 'Noto Sans SC', Tahoma, Arial, Roboto, "Droid Sans", "Helvetica Neue", "Droid Sans Fallback", "Heiti SC", "Hiragino Sans GB", Simsun, sans-serif;
+            line-height: 1.8;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            transition: var(--transition);
+            margin: 0;
+            padding: 0;
+            overflow-x: hidden;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Noto Serif SC', serif, 'SimHei', 'Microsoft YaHei';
+            font-weight: 600;
+            line-height: 1.4;
+            color: #1a202c;
+            transition: var(--transition);
+        }
+
+        .content-container {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            max-width: 1400px;
+            margin: 2rem auto;
+            padding: 2.5rem;
+        }
+
+        .main-title {
+            font-size: 2.5rem;
+            text-align: center !important;
+            margin-bottom: 2rem;
+            padding-bottom: 1.5rem;
+            border-bottom: 3px solid var(--border-color);
+            color: #1a202c;
+            transition: var(--transition);
+            line-height: 1.3;
+        }
+
+        .section-title {
+            font-size: 2rem;
+            color: #1a202c;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.75rem;
+            margin-top: 3rem;
+            margin-bottom: 1.5rem;
+            transition: var(--transition);
+            text-align: center !important;
+        }
+
+        .text-center {
+            text-align: center !important;
+        }
+
+        .subsection-title {
+            font-size: 1.5rem;
+            color: #1a202c;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            transition: var(--transition);
+        }
+
+        p {
+            margin: 1rem 0;
+            font-size: 1.125rem;
+            text-align: justify;
+            color: var(--text-color);
+            transition: var(--transition);
+        }
+
+        img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 2rem auto;
+            border-radius: 0.5rem;
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease;
+        }
+
+        img:hover {
+            transform: scale(1.01);
+        }
+
+        .cover-header {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cover-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: none;
+            background-color: rgb(255, 255, 255);
+            z-index: 0;
+        }
+
+        .cover-header .container {
+            position: relative;
+            z-index: 1;
+        }
+
+        .text-gradient {
+            background: linear-gradient(to right, var(--gradient-start), var(--gradient-end));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .feature-card {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            background-color: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-radius: 0.75rem;
+            padding: 0.9rem 1.1rem;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            margin-bottom: 0.6rem;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            background-color: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .container {
+            width: 100%;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .mx-auto {
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .max-w-7xl {
+            max-width: 80rem;
+        }
+
+        .video-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 2rem;
+            margin: 2rem 0;
+        }
+
+        .video-wrapper {
+            background-color: var(--card-bg);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: var(--shadow);
+            transition: var(--transition);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .video-wrapper:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .video-aspect-wrapper {
+            position: relative;
+            padding-bottom: 56.25%;
+            height: 0;
+            overflow: hidden;
+            margin-bottom: 1rem;
+        }
+
+        video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            border-radius: 0.5rem;
+            background: #000;
+        }
+
+        .method-section img,
+        .experiment-section img {
+            max-width: 85%;
+            margin: 2.5rem auto;
+        }
+
+        .theme-toggle,
+        .back-to-top {
+            position: fixed;
+            width: 3rem;
+            height: 3rem;
+            border-radius: 50%;
+            background-color: var(--primary-color);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            z-index: 1000;
+            border: none;
+            transition: var(--transition);
+        }
+
+        .theme-toggle {
+            bottom: 2rem;
+            left: 2rem;
+        }
+
+        .back-to-top {
+            bottom: 2rem;
+            right: 2rem;
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px);
+        }
+
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0);
+        }
+
+        .theme-toggle:hover,
+        .back-to-top:hover {
+            background-color: var(--secondary-color);
+            transform: translateY(-3px);
+        }
+
+        .dark h1, .dark h2, .dark h3, .dark h4, .dark h5, .dark h6,
+        .dark .main-title, .dark .section-title, .dark .subsection-title {
+            color: #f7fafc;
+        }
+
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background-color: var(--card-bg);
+            box-shadow: var(--shadow);
+            transition: transform 0.3s ease, background-color 0.3s ease;
+            padding: 0.75rem 0;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            background-color: rgba(255, 255, 255, 0.9);
+            transform: translateY(-100%);
+        }
+
+        .navbar.visible {
+            transform: translateY(0);
+        }
+
+        .dark .navbar {
+            background-color: rgba(26, 32, 44, 0.9);
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 2rem;
+        }
+
+        .logo {
+            font-weight: 700;
+            font-size: 1.5rem;
+            color: #1a202c;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            transition: var(--transition);
+        }
+
+        .dark .logo {
+            color: #f7fafc;
+        }
+
+        .nav-links {
+            display: flex;
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        .nav-links li {
+            margin-left: 2rem;
+        }
+
+        .nav-links a {
+            color: #1a202c;
+            text-decoration: none;
+            font-weight: 500;
+            position: relative;
+            padding: 0.5rem 0;
+            transition: var(--transition);
+        }
+
+        .dark .nav-links a {
+            color: #f7fafc;
+        }
+
+        .nav-links a:after {
+            content: '';
+            position: absolute;
+            width: 0;
+            height: 2px;
+            bottom: 0;
+            left: 0;
+            background-color: var(--primary-color);
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover {
+            color: var(--primary-color);
+        }
+
+        .nav-links a:hover:after {
+            width: 100%;
+        }
+
+        .mobile-menu-btn {
+            display: none;
+            background: none;
+            border: none;
+            color: #1a202c;
+            font-size: 1.5rem;
+            cursor: pointer;
+        }
+
+        .dark .mobile-menu-btn {
+            color: #f7fafc;
+        }
+
+        .fade-in {
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .fade-in.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .highlight {
+            color: #2b6cb0;
+            font-weight: bold;
+            text-align: center;
+            padding: 1.5rem;
+            background-color: var(--highlight-bg);
+            border: 1px solid var(--highlight-border);
+            border-radius: 0.5rem;
+            margin: 2.5rem 0;
+            transition: var(--transition);
+        }
+
+        strong {
+            color: var(--secondary-color);
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .pillar-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .pillar-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: var(--transition);
+            box-shadow: var(--shadow);
+        }
+
+        .pillar-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .pillar-card h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+            color: #1a202c;
+        }
+
+        .pillar-card p {
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        .pillar-icon {
+            font-size: 2rem;
+            margin-bottom: 0.75rem;
+            display: block;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 2rem 0;
+            border-radius: 0.75rem;
+            box-shadow: var(--shadow);
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .results-table th, .results-table td {
+            padding: 0.75rem 1rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        .results-table th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        .results-table tr:nth-child(even) {
+            background-color: rgba(var(--bg-color-rgb), 0.5);
+        }
+
+        .results-table tr:hover {
+            background-color: rgba(var(--primary-color-rgb), 0.08);
+        }
+
+        .results-table .highlight-row {
+            background-color: rgba(var(--primary-color-rgb), 0.12);
+            font-weight: 600;
+        }
+
+        .results-table .best {
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+
+        .results-table .category-header {
+            background-color: rgba(var(--primary-color-rgb), 0.05);
+            font-weight: 600;
+            text-align: left;
+            padding-left: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .nav-links {
+                display: none;
+                flex-direction: column;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                right: 0;
+                background-color: var(--card-bg);
+                padding: 1rem 0;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            }
+
+            .nav-links.active {
+                display: flex;
+            }
+
+            .nav-links li {
+                margin: 0.5rem 2rem;
+            }
+
+            .mobile-menu-btn {
+                display: block;
+            }
+
+            .content-container {
+                padding: 1.5rem;
+                margin: 1rem;
+            }
+
+            .main-title {
+                font-size: 1.8rem;
+            }
+
+            .section-title {
+                font-size: 1.6rem;
+            }
+
+            .subsection-title {
+                font-size: 1.3rem;
+            }
+
+            p {
+                font-size: 1rem;
+            }
+
+            .video-container {
+                grid-template-columns: 1fr;
+            }
+
+            .theme-toggle,
+            .back-to-top {
+                width: 2.5rem;
+                height: 2.5rem;
+            }
+
+            .cover-header .flex {
+                flex-direction: column;
+            }
+
+            .text-gradient {
+                font-size: 1.8rem;
+            }
+
+            .pillar-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Reading Progress Bar -->
+    <div class="reading-progress-bar" id="reading-progress"></div>
+
+    <!-- Navigation Bar -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <a href="#" class="logo">WorldScape</a>
+            <ul class="nav-links">
+                <li><a href="#overview">Abstract</a></li>
+                <li><a href="#demo">Demo</a></li>
+                <li><a href="#challenge">Challenge</a></li>
+                <li><a href="#method">Method</a></li>
+                <li><a href="#experiment">Experiments</a></li>
+            </ul>
+            <button class="mobile-menu-btn">
+                <i class="fas fa-bars"></i>
+            </button>
+        </div>
+    </nav>
+
+    <button class="theme-toggle" aria-label="Toggle dark/light mode">
+        <i class="fas fa-moon"></i>
+    </button>
+    <button class="back-to-top" aria-label="Back to top">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <!-- Cover Header -->
+    <header class="cover-header">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css" />
+        <style>
+            .cover-header {
+                position: relative !important;
+                height: 100vh !important;
+                width: 100% !important;
+                overflow: hidden !important;
+                margin-bottom: 0 !important;
+                background-color: #0a1628 !important;
+                display: block !important;
+            }
+
+            .fas, .fab, .ai {
+                display: inline-block !important;
+            }
+
+            .video-grid {
+                display: grid;
+                grid-template-columns: repeat(4, 25vw);
+                grid-template-rows: repeat(3, 33.3333vh);
+                width: 100vw;
+                height: 100vh;
+                position: absolute;
+                top: 0;
+                left: 0;
+                z-index: 0;
+                overflow: hidden;
+                margin: 0;
+                padding: 0;
+                grid-gap: 0;
+                background-color: #0a1628;
+            }
+
+            .video-grid video {
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+                display: block;
+                border: none;
+                margin: 0;
+                padding: 0;
+                max-width: none;
+                box-shadow: none;
+                transition: none;
+                transform: none;
+                border-radius: 0;
+                position: relative;
+            }
+
+            .video-grid video:hover {
+                transform: none;
+            }
+
+            .overlay {
+                position: absolute !important;
+                top: 0 !important;
+                left: 0 !important;
+                width: 100vw !important;
+                height: 100vh !important;
+                background: linear-gradient(135deg, rgba(10, 22, 40, 0.75), rgba(15, 35, 60, 0.65)) !important;
+                z-index: 1 !important;
+            }
+
+            .text-container {
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+                z-index: 2;
+                text-align: center;
+                color: white;
+                text-shadow: 0 0 10px black;
+                width: 90%;
+                max-width: 1200px;
+                font-family: 'Noto Serif SC', serif, 'SimHei', 'Microsoft YaHei';
+            }
+
+            .text-container h1 {
+                font-size: 4.5em;
+                margin-bottom: 0.3em;
+                font-weight: 700;
+                letter-spacing: 3px;
+                color: white;
+                line-height: 1.2;
+                text-shadow: 0 0 15px rgba(0,0,0,0.7);
+            }
+
+            .text-container .main-subtitle {
+                font-size: 1.6em;
+                white-space: nowrap;
+                margin: 0.2em 0;
+                font-weight: 500;
+                color: white;
+                line-height: 1.5;
+            }
+
+            .text-container p {
+                font-size: 1.2em;
+                margin: 0.3em 0;
+                font-weight: 400;
+                color: rgba(255, 255, 255, 0.9);
+                line-height: 1.5;
+            }
+
+            .features-container {
+                margin-top: 1rem;
+                display: flex;
+                flex-direction: column;
+                gap: 0.5rem;
+                background-color: rgba(0, 0, 0, 0.4);
+                border-radius: 10px;
+                padding: 1.5rem;
+                backdrop-filter: blur(5px);
+                max-width: 750px;
+                margin-left: auto;
+                margin-right: auto;
+            }
+
+            .feature-item {
+                display: flex;
+                align-items: center;
+                gap: 0.75rem;
+                text-align: left;
+                font-size: 1em;
+                margin: 0.25rem 0;
+            }
+
+            .feature-icon {
+                color: #3182ce;
+                font-size: 1.2em;
+                flex-shrink: 0;
+            }
+
+            .feature-item span {
+                font-weight: 600;
+                color: #63b3ed;
+            }
+
+            .action-buttons {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: center;
+                gap: 1rem;
+                margin-top: 2rem;
+                position: absolute;
+                bottom: 5%;
+                left: 0;
+                right: 0;
+                z-index: 3;
+            }
+
+            .action-button {
+                padding: 0.8rem 1.5rem;
+                border-radius: 50px;
+                font-weight: 600;
+                display: flex;
+                align-items: center;
+                gap: 0.5rem;
+                transition: all 0.3s ease;
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+                background: rgba(0, 0, 0, 0.7);
+                color: white;
+                border: 1px solid rgba(255, 255, 255, 0.2);
+                text-decoration: none;
+            }
+
+            .action-button:hover {
+                transform: translateY(-3px);
+                box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+                background: rgba(0, 0, 0, 0.8);
+            }
+
+            .navbar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                z-index: 1000;
+                transition: transform 0.3s ease, background-color 0.3s ease;
+                transform: translateY(-100%);
+            }
+
+            .navbar.visible {
+                transform: translateY(0);
+            }
+
+            @media (max-width: 768px) {
+                .text-container h1 {
+                    font-size: 2.5em;
+                }
+
+                .text-container .main-subtitle {
+                    font-size: 1.2em;
+                    white-space: normal;
+                }
+
+                .text-container p {
+                    font-size: 1em;
+                    white-space: normal;
+                }
+
+                .features-container {
+                    padding: 1rem;
+                    margin-top: 1rem;
+                }
+
+                .feature-item {
+                    font-size: 0.9em;
+                    gap: 0.5rem;
+                }
+
+                .action-button {
+                    padding: 0.7rem 1.2rem;
+                    font-size: 0.9rem;
+                }
+            }
+        </style>
+
+        <!-- Video Grid Background -->
+        <div class="video-grid">
+            <video src="source/cover_01.mp4" autoplay muted loop playsinline></video>
+            <video src="source/cover_02.mp4" autoplay muted loop playsinline></video>
+            <video src="source/cover_03.mp4" autoplay muted loop playsinline></video>
+            <video src="source/cover_04.mp4" autoplay muted loop playsinline></video>
+            <video src="source/cover_05.mp4" autoplay muted loop playsinline></video>
+            <video src="source/cover_06.mp4" autoplay muted loop playsinline></video>
+            <video src="source/cover_07.mp4" autoplay muted loop playsinline></video>
+            <video src="source/cover_08.mp4" autoplay muted loop playsinline></video>
+            <video src="source/cover_09.mp4" autoplay muted loop playsinline></video>
+            <video src="source/cover_10.mp4" autoplay muted loop playsinline></video>
+            <video src="source/cover_11.mp4" autoplay muted loop playsinline></video>
+            <video src="source/cover_12.mp4" autoplay muted loop playsinline></video>
+        </div>
+
+        <!-- Overlay -->
+        <div class="overlay"></div>
+
+        <!-- Cover Text -->
+        <div class="text-container text-center">
+            <h1 class="text-center">WorldScape</h1>
+            <p class="text-center main-subtitle">An Efficient Real-Time Interactive World Model</p>
+            <p class="text-center main-subtitle">with Universal Control</p>
+
+            <div class="features-container">
+                <p class="feature-item text-center"><i class="fas fa-gamepad feature-icon" style="color: #4fd1c5; font-weight: bold;"></i> <span style="color: #4fd1c5; font-weight: bold;">Universal Interactivity</span> Unified conditioning for both navigation (WASD) and dexterous hand manipulation</p>
+                <p class="feature-item text-center"><i class="fas fa-cube feature-icon" style="color: #4fd1c5; font-weight: bold;"></i> <span style="color: #4fd1c5; font-weight: bold;">3D Spatial Consistency</span> 3D Gaussian Splatting priors injected via multi-task training</p>
+                <p class="feature-item text-center"><i class="fas fa-bolt feature-icon" style="color: #4fd1c5; font-weight: bold;"></i> <span style="color: #4fd1c5; font-weight: bold;">Real-Time (16 FPS)</span> Asymmetric causal distillation on a single H100 GPU</p>
+                <p class="feature-item text-center"><i class="fas fa-brain feature-icon" style="color: #4fd1c5; font-weight: bold;"></i> <span style="color: #4fd1c5; font-weight: bold;">Long-Horizon Memory</span> Geometry-aware KV cache with hierarchical memory management</p>
+            </div>
+        </div>
+
+        <!-- Action Buttons
+        <div class="action-buttons">
+            <a href="#" class="action-button">
+                <i class="ai ai-arxiv"></i>
+                <span>arXiv</span>
+            </a>
+            <a href="#" class="action-button">
+                <i class="fas fa-file-pdf"></i>
+                <span>PDF</span>
+            </a>
+            <a href="#" class="action-button">
+                <i class="fab fa-github"></i>
+                <span>Code</span>
+            </a>
+            <a href="#" class="action-button">
+                <i class="fas fa-globe"></i>
+                <span>Demo</span>
+            </a>
+        </div> -->
+    </header>
+
+    <!-- Main Content -->
+    <div class="content-container" style="margin-top: 2rem; border-radius: 1rem;">
+
+        <!-- Authors Section -->
+        <div class="authors-section fade-in my-6">
+            <div class="flex flex-col items-center">
+                <div class="w-full max-w-5xl mx-auto text-center">
+                    <div class="text-xl mb-3 font-medium">
+                        <p class="mb-2 flex justify-center flex-wrap gap-x-2" style="text-align: center;">
+                            Anonymous Authors
+                        </p>
+                    </div>
+                    <div class="mb-4">
+                        <div class="inline-block font-bold text-xl">
+                            <i class="fas fa-university" style="color: var(--primary-color);"></i>
+                            <span>ICML 2026 Submission</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Abstract / Overview Section -->
+        <h2 id="overview" class="section-title text-center fade-in">Abstract</h2>
+
+        <div class="fade-in" style="background-color: var(--highlight-bg); border: 1px solid var(--highlight-border); border-radius: 0.75rem; padding: 1.5rem 2rem; margin: 1.5rem 0;">
+            <p style="text-align: justify; margin: 0;">
+                Interactive world models enable training AI agents within an unlimited curriculum of rich simulation environments. We present <strong>WorldScape</strong>, an autoregressive video diffusion model capable of real-time, streaming prediction of how visual observations evolve given navigation or manipulation actions. The generated observations implicitly construct a world that exhibits physical consistency and memory. WorldScape is powered by four key components: (1) For <strong>interactivity</strong>, we design a unified interaction-aware conditioning scheme that enables visual control over both navigation and manipulation. (2) For <strong>3D spatial consistency</strong>, we introduce spatial-aware consistency training incorporating 3D Gaussian Splatting&ndash;based supervision to inject geometric priors into generation. (3) For <strong>real-time capability</strong>, we adopt an asymmetric distillation strategy that converts the bidirectional diffusion backbone into a fast autoregressive model, achieving a generation speed of 16 FPS on a single H100 GPU. (4) For <strong>memory</strong>, we develop a geometry-aware KV cache optimization with hierarchical memory management to maintain long-range spatial coherence in streaming generation. Experiments demonstrate that WorldScape achieves balanced state-of-the-art performance across visual quality, interactivity, memory, and real-time capability, maintaining superior overall competence compared to existing models.
+            </p>
+        </div>
+
+        <img src="source/fig_introduction.png" alt="WorldScape Introduction - Indoor Exploration, Outdoor Exploration, and Hand Interaction" class="fade-in" style="width: 90%; max-width: 1100px; height: auto; object-fit: contain;">
+        <p class="text-center fade-in" style="font-size: 0.95rem; color: #718096; margin-top: -0.5rem;">
+            <em>WorldScape supports indoor/outdoor spatial navigation (WASD + camera rotation) and dexterous hand manipulation.</em>
+        </p>
+
+        <!-- Interactive Demo Section (moved here after Abstract) -->
+        <h2 id="demo" class="section-title text-center fade-in">Interactive Demo</h2>
+
+        <div class="video-container mt-8">
+            <!-- Camera Control -->
+            <div class="video-wrapper">
+                <h3 class="text-center text-xl font-semibold mb-3" style="border-bottom: none; margin-top: 0;">
+                    <i class="fas fa-video" style="color: var(--primary-color);"></i> Camera Control (Navigation)
+                </h3>
+                <div class="video-aspect-wrapper">
+                    <video controls preload="metadata" playsinline loop class="shadow-lg" style="width: 100%; height: 100%;">
+                        <source src="source/CameraControl.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                <p style="font-size: 0.95rem; text-align: center; margin-top: 0.5rem; color: #718096;">
+                    Spatial navigation using WASD keys and camera rotation controls.
+                </p>
+            </div>
+
+            <!-- Hand Control -->
+            <div class="video-wrapper">
+                <h3 class="text-center text-xl font-semibold mb-3" style="border-bottom: none; margin-top: 0;">
+                    <i class="fas fa-hand-paper" style="color: var(--primary-color);"></i> Hand Control (Manipulation)
+                </h3>
+                <div class="video-aspect-wrapper">
+                    <video controls preload="metadata" playsinline loop class="shadow-lg" style="width: 100%; height: 100%;">
+                        <source src="source/HandControl.mp4" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                </div>
+                <p style="font-size: 0.95rem; text-align: center; margin-top: 0.5rem; color: #718096;">
+                    Dexterous hand manipulation for pick-and-place tasks.
+                </p>
+            </div>
+        </div>
+
+
+        <!-- Challenge Section -->
+        <h2 id="challenge" class="section-title text-center fade-in">The Challenge: What Makes Interactive World Models Hard?</h2>
+
+        <p class="fade-in">
+            Building a truly interactive world model requires simultaneously satisfying four properties that are individually difficult and jointly elusive:
+        </p>
+
+        <p class="fade-in">
+            <strong>1. Interactivity.</strong> A world model must understand and respond to general forms of action &mdash; from walking through a room to picking up an object with a specific hand pose. Most existing models either rely solely on language instructions or support only a narrow action type (e.g., camera movement or manipulation, but never both). A unified framework for universal control remains an open problem.
+        </p>
+        <p class="fade-in">
+            <strong>2. 3D Spatial Consistency.</strong> Generated frames must respect coherent 3D geometry. Without explicit spatial supervision, models trained purely on pixel reconstruction tend to exhibit spatial collapse &mdash; objects abruptly change shape or drift across frames as the camera moves. The world should look the same whether you approach a chair from the left or the right.
+        </p>
+        <p class="fade-in">
+            <strong>3. Real-Time Capability.</strong> For interactive use &mdash; whether for agent training or human immersion &mdash; the world model must generate in sync with real time. State-of-the-art high-fidelity models often require minutes per video, far from the sub-100ms latency needed for responsive interaction. Diffusion models compound this challenge with their inherent multi-step denoising.
+        </p>
+        <p class="fade-in">
+            <strong>4. Memory.</strong> When a user navigates away from a region and then returns, the model should remember what was there. Without explicit memory, generative models hallucinate inconsistent content upon revisitation, making it impossible to build a coherent, persistent world.
+        </p>
+
+
+        <!-- Method Section -->
+        <h2 id="method" class="section-title text-center fade-in">Method</h2>
+        <div class="method-section">
+            <p class="fade-in">
+                WorldScape addresses all four challenges through a staged training and inference pipeline:
+            </p>
+
+            <img src="source/fig_framework.png" alt="WorldScape Framework" class="fade-in" style="width: 95%; max-width: 1200px; height: auto; object-fit: contain;">
+            <p class="text-center fade-in" style="font-size: 0.95rem; color: #718096; margin-top: -0.5rem;">
+                <em><strong>Framework of WorldScape.</strong> (a) Camera & Motion Injection, (b) Spatial-aware Consistency Training, (c) Causal Distillation, (d) Memory-aware Cache Optimization.</em>
+            </p>
+
+            <h3 class="subsection-title fade-in">Unified Interaction-Aware Conditioning</h3>
+            <p class="fade-in">
+                Camera trajectories are represented as Pl&uuml;cker embeddings and injected into the DiT backbone via a lightweight camera encoder. Hand motions are converted to pose videos, concatenated with the input along the frame dimension, and fed jointly into the model &mdash; enabling a single unified architecture to handle both navigation and manipulation without task-specific heads.
+            </p>
+
+            <h3 class="subsection-title fade-in">Spatial-Aware Consistency Training</h3>
+            <p class="fade-in">
+                Beyond standard flow matching loss, WorldScape jointly supervises depth maps and multi-view RGB renderings reconstructed from a ViT-based 3DGS aggregator. This multi-task objective organically injects 3D structural awareness into a model that would otherwise optimize purely in pixel space:
+            </p>
+            <p class="fade-in text-center" style="font-size: 1.2rem; font-style: italic; padding: 0.5rem;">
+                &Lscr;<sub>total</sub> = &Lscr;<sub>fm</sub> + &alpha;&Lscr;<sub>depth</sub> + &beta;&Lscr;<sub>render</sub>
+            </p>
+
+            <h3 class="subsection-title fade-in">Causal Distillation via Sliding-Window Self Forcing</h3>
+            <p class="fade-in">
+                A bidirectional teacher model is distilled into a fast causal student using a rolling denoising window. Chunks at different noise levels are allowed to attend to each other within a sliding window, providing mutual refinement while a monotonically advancing KV cache preserves causal consistency. The DMD objective aligns the student's distribution with the teacher's. The result: an <strong>8.7&times; speedup</strong> with minimal quality degradation.
+            </p>
+
+            <h3 class="subsection-title fade-in">Memory-Aware KV Cache Optimization (MACO)</h3>
+            <p class="fade-in">
+                During streaming inference, past KV cache entries are managed through a three-level hierarchy: a <strong>permanent sink anchor</strong>, an <strong>optimized global memory pool</strong>, and a <strong>local sliding window</strong>. Cache entries are selected via geometry-aware similarity scores (view direction + camera position), deduplicated using an MDL-inspired information-gain gate, and globally pruned via Farthest Point Sampling when the memory budget is exceeded. This keeps memory complexity sublinear while preserving long-range spatial coherence.
+            </p>
+        </div>
+
+
+
+
+        <!-- Experiments Section -->
+        <h2 id="experiment" class="section-title text-center fade-in">Experiments</h2>
+        <div class="experiment-section">
+
+            <h3 class="subsection-title fade-in">Quantitative Results on Spatial Navigation</h3>
+            <p class="fade-in">
+                WorldScape is evaluated on visual quality (VBench), interactivity (Trajectory Accuracy), memory (Memory Symmetry), and generation speed (FPS / pixel throughput). Among all models under 5B parameters, WorldScape achieves the best imaging quality, subject consistency, trajectory accuracy, and memory symmetry &mdash; while matching or surpassing several models with over 5B parameters on key metrics.
+            </p>
+
+            <div class="table-container fade-in">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Model</th>
+                            <th colspan="4">Visual Quality</th>
+                            <th>Interactivity</th>
+                            <th>Memory</th>
+                            <th colspan="2">Real-time</th>
+                        </tr>
+                        <tr>
+                            <th>Imaging Quality &uarr;</th>
+                            <th>Motion Smooth. &uarr;</th>
+                            <th>Subject Consist. &uarr;</th>
+                            <th>BG Consist. &uarr;</th>
+                            <th>Traj. Accuracy &uarr;</th>
+                            <th>Memory Sym. &uarr;</th>
+                            <th>FPS &uarr;</th>
+                            <th>Pixel Thru. &uarr;</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="category-header" colspan="9">Large Scale Models (&ge; 5B)</td></tr>
+                        <tr>
+                            <td>RealCam-I2V</td><td>0.598</td><td>0.987</td><td>0.847</td><td>0.915</td><td>0.580</td><td>0.802</td><td>0.97</td><td>0.445</td>
+                        </tr>
+                        <tr>
+                            <td>AC3D</td><td>0.451</td><td class="best">0.992</td><td>0.878</td><td class="best">0.923</td><td>0.595</td><td class="best">0.909</td><td>0.11</td><td>0.038</td>
+                        </tr>
+                        <tr>
+                            <td>YUME 1.5</td><td>0.591</td><td>0.980</td><td>0.830</td><td>0.917</td><td class="best">0.714</td><td>0.509</td><td>0.27</td><td>0.243</td>
+                        </tr>
+                        <tr>
+                            <td>HY-World 1.5</td><td class="best">0.656</td><td class="best">0.992</td><td class="best">0.932</td><td class="best">0.923</td><td>0.699</td><td>0.841</td><td class="best">1.12</td><td class="best">0.447</td>
+                        </tr>
+                        <tr><td class="category-header" colspan="9">Small Scale Models (&lt; 5B)</td></tr>
+                        <tr>
+                            <td>CamI2V</td><td>0.503</td><td>0.989</td><td>0.799</td><td>0.908</td><td>0.691</td><td>0.376</td><td>1.34</td><td>0.220</td>
+                        </tr>
+                        <tr>
+                            <td>CameraCtrl</td><td>0.451</td><td>0.981</td><td>0.735</td><td>0.880</td><td>0.679</td><td>0.414</td><td>5.02</td><td>0.329</td>
+                        </tr>
+                        <tr>
+                            <td>MotionCtrl</td><td>0.458</td><td>0.975</td><td>0.723</td><td>0.875</td><td>0.662</td><td>0.305</td><td>5.13</td><td>0.336</td>
+                        </tr>
+                        <tr>
+                            <td>Astra</td><td>0.535</td><td>0.981</td><td>0.782</td><td>0.885</td><td>0.608</td><td>0.440</td><td>0.41</td><td>0.164</td>
+                        </tr>
+                        <tr>
+                            <td>Matrix-Game 2.0</td><td>0.495</td><td>0.985</td><td>0.727</td><td>0.884</td><td>0.671</td><td>0.308</td><td class="best">8.09</td><td>1.823</td>
+                        </tr>
+                        <tr class="highlight-row">
+                            <td><strong>WorldScape</strong></td><td class="best"><strong>0.685</strong></td><td>0.986</td><td class="best"><strong>0.891</strong></td><td class="best"><strong>0.923</strong></td><td class="best"><strong>0.717</strong></td><td class="best"><strong>0.686</strong></td><td>6.27</td><td class="best"><strong>2.504</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="subsection-title fade-in">Qualitative Results: Spatial Navigation</h3>
+            <p class="fade-in">
+                Under diverse environments and lighting conditions, WorldScape maintains better spatial consistency and memory during interaction, enabling improved streaming visual generation compared to baselines.
+            </p>
+            <img src="source/fig_navigation_cases.png" alt="Qualitative Navigation Results" class="fade-in" style="width: 90%; max-width: 1100px; height: auto; object-fit: contain;">
+            <p class="text-center fade-in" style="font-size: 0.95rem; color: #718096; margin-top: -0.5rem;">
+                <em>Qualitative comparisons on spatial navigation across different environments.</em>
+            </p>
+
+            <h3 class="subsection-title fade-in">Hand Motion Control</h3>
+            <p class="fade-in">
+                On the EgoDex test set, WorldScape achieves the best FVD and image-level FID scores across both general video generation baselines and dedicated pose-guided models, demonstrating temporally coherent and visually faithful hand-object interactions.
+            </p>
+
+            <div class="table-container fade-in">
+                <table class="results-table">
+                    <thead>
+                        <tr>
+                            <th rowspan="2">Model</th>
+                            <th colspan="2">Video</th>
+                            <th>Image</th>
+                            <th rowspan="2">FPS &uarr;</th>
+                        </tr>
+                        <tr>
+                            <th>FID-VID &darr;</th>
+                            <th>FVD &darr;</th>
+                            <th>FID &darr;</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="category-header" colspan="5">Large Scale Models (&ge; 5B)</td></tr>
+                        <tr>
+                            <td>Wan2.2-TI2V-5B</td><td>129.14</td><td>1421.37</td><td>207.77</td><td>0.23</td>
+                        </tr>
+                        <tr>
+                            <td>HunyuanVideo-1.5</td><td>22.56</td><td>530.17</td><td>55.58</td><td>0.05</td>
+                        </tr>
+                        <tr>
+                            <td>Cosmos-Predict 2.5</td><td class="best">14.47</td><td>612.84</td><td>52.11</td><td>0.11</td>
+                        </tr>
+                        <tr><td class="category-header" colspan="5">Small Scale Models (&lt; 5B)</td></tr>
+                        <tr>
+                            <td>MimicMotion</td><td>25.86</td><td>601.20</td><td>47.84</td><td>0.15</td>
+                        </tr>
+                        <tr>
+                            <td>MagicDance</td><td>68.48</td><td>1552.93</td><td>93.26</td><td>0.11</td>
+                        </tr>
+                        <tr class="highlight-row">
+                            <td><strong>WorldScape</strong></td><td>28.88</td><td class="best"><strong>373.79</strong></td><td class="best"><strong>45.64</strong></td><td class="best"><strong>6.27</strong></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3 class="subsection-title fade-in">Qualitative Results: Hand Manipulation</h3>
+            <p class="fade-in">
+                Compared to existing models, WorldScape effectively performs pick-and-place tasks on objects based on the given hand motion. Baseline models often fail to produce temporally consistent hand-object interactions, while WorldScape generates stable and coherent manipulation sequences.
+            </p>
+            <img src="source/fig_hand_cases.png" alt="Hand Control Qualitative Results" class="fade-in" style="width: 90%; max-width: 1100px; height: auto; object-fit: contain;">
+            <p class="text-center fade-in" style="font-size: 0.95rem; color: #718096; margin-top: -0.5rem;">
+                <em>Qualitative comparisons on hand manipulation. WorldScape effectively performs pick-and-place tasks.</em>
+            </p>
+
+            <h3 class="subsection-title fade-in">Ablation Studies</h3>
+            <p class="fade-in">
+                Each proposed component contributes measurably to performance:
+            </p>
+            <ul class="fade-in" style="list-style: none; padding-left: 1rem; font-size: 1.1rem;">
+                <li style="margin-bottom: 0.75rem; padding: 0.5rem; border-left: 3px solid var(--primary-color); padding-left: 1rem;">
+                    <strong>Spatial-aware Consistency Training:</strong> Removing it degrades memory symmetry from 0.919 &rarr; 0.866 and multiview consistency from 0.406 &rarr; 0.331.
+                </li>
+                <li style="margin-bottom: 0.75rem; padding: 0.5rem; border-left: 3px solid var(--primary-color); padding-left: 1rem;">
+                    <strong>MACO:</strong> Replacing it with a naive rolling cache reduces memory symmetry from 0.570 &rarr; 0.536 on 145-frame sequences.
+                </li>
+                <li style="margin-bottom: 0.75rem; padding: 0.5rem; border-left: 3px solid var(--primary-color); padding-left: 1rem;">
+                    <strong>Causal Distillation:</strong> Removing it reduces FPS from 6.27 &rarr; 0.72 &mdash; an 8.7&times; slowdown &mdash; while also hurting imaging quality.
+                </li>
+            </ul>
+
+            <img src="source/fig_ablation.png" alt="Ablation Study Visualization" class="fade-in" style="width: 90%; max-width: 1100px; height: auto; object-fit: contain;">
+            <p class="text-center fade-in" style="font-size: 0.95rem; color: #718096; margin-top: -0.5rem;">
+                <em>Ablation of spatial-aware consistency training and memory-aware KV cache. Red boxes highlight shape distortion and content inconsistency when components are removed.</em>
+            </p>
+        </div>
+    </div>
+
+
+    <script>
+        // Theme toggle
+        const themeToggle = document.querySelector('.theme-toggle');
+        const htmlElement = document.documentElement;
+        const themeIcon = document.querySelector('.theme-toggle i');
+
+        if (localStorage.getItem('theme') === 'dark' ||
+            (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+            htmlElement.classList.add('dark');
+            themeIcon.classList.remove('fa-moon');
+            themeIcon.classList.add('fa-sun');
+        }
+
+        themeToggle.addEventListener('click', () => {
+            htmlElement.classList.toggle('dark');
+            if (htmlElement.classList.contains('dark')) {
+                localStorage.setItem('theme', 'dark');
+                themeIcon.classList.remove('fa-moon');
+                themeIcon.classList.add('fa-sun');
+            } else {
+                localStorage.setItem('theme', 'light');
+                themeIcon.classList.remove('fa-sun');
+                themeIcon.classList.add('fa-moon');
+            }
+        });
+
+        // Back to top
+        const backToTopButton = document.querySelector('.back-to-top');
+        window.addEventListener('scroll', () => {
+            if (window.pageYOffset > 300) {
+                backToTopButton.classList.add('visible');
+            } else {
+                backToTopButton.classList.remove('visible');
+            }
+            updateReadingProgress();
+        });
+
+        backToTopButton.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Mobile menu
+        const mobileMenuBtn = document.querySelector('.mobile-menu-btn');
+        const navLinks = document.querySelector('.nav-links');
+        mobileMenuBtn.addEventListener('click', () => {
+            navLinks.classList.toggle('active');
+        });
+
+        // Smooth scroll
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const targetId = this.getAttribute('href');
+                if (targetId === '#') return;
+                const targetElement = document.querySelector(targetId);
+                if (targetElement) {
+                    window.scrollTo({
+                        top: targetElement.offsetTop - 80,
+                        behavior: 'smooth'
+                    });
+                    if (window.innerWidth <= 768) {
+                        navLinks.classList.remove('active');
+                    }
+                }
+            });
+        });
+
+        // Scroll animations
+        function checkVisibility() {
+            const fadeElements = document.querySelectorAll('.fade-in');
+            fadeElements.forEach((element) => {
+                const elementTop = element.getBoundingClientRect().top;
+                if (elementTop < window.innerHeight - 150) {
+                    element.classList.add('visible');
+                }
+            });
+        }
+
+        window.addEventListener('load', checkVisibility);
+        window.addEventListener('scroll', checkVisibility);
+
+        // Reading progress bar + navbar
+        function updateReadingProgress() {
+            const progressBar = document.getElementById('reading-progress');
+            const totalHeight = document.body.scrollHeight - window.innerHeight;
+            const progress = (window.scrollY / totalHeight) * 100;
+            progressBar.style.width = `${progress}%`;
+
+            const navbar = document.querySelector('.navbar');
+            const coverHeader = document.querySelector('.cover-header');
+            const coverHeight = coverHeader ? coverHeader.offsetHeight : 0;
+
+            if (window.scrollY > coverHeight - 100) {
+                navbar.classList.add('visible');
+            } else {
+                navbar.classList.remove('visible');
+            }
+        }
+
+        window.addEventListener('scroll', updateReadingProgress);
+        window.addEventListener('load', updateReadingProgress);
+    </script>
+</body>
+</html>
